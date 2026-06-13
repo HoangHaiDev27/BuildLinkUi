@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { AuthShell, SocialButtons, OrDivider, Captcha } from '@/components/auth-shell'
+import { apiClient } from '@/lib/api-client'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const PHONE_RE = /^0\d{9,10}$/
@@ -38,7 +39,7 @@ export default function RegisterPage() {
     return ''
   }
 
-  function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
     const err = validate()
     if (err) {
@@ -47,13 +48,31 @@ export default function RegisterPage() {
     }
     setError('')
     setPending(true)
-    setTimeout(() => {
-      setPending(false)
+
+    const response = await apiClient.post('/api/Auth/register', {
+      email: form.email,
+      password: form.password,
+      confirmPassword: form.password,
+      phoneNumber: form.phone,
+      address: '',
+      roleName: 'Customer',
+      userName: form.name,
+      companyName: '',
+    })
+
+    setPending(false)
+
+    if (response.success) {
       toast.success('Tạo tài khoản thành công', {
         description: 'Bạn có thể đăng nhập để bắt đầu yêu cầu báo giá.',
       })
       router.push('/login')
-    }, 1000)
+    } else {
+      setError(response.message || 'Đăng ký thất bại.')
+      toast.error('Đăng ký thất bại', {
+        description: response.message,
+      })
+    }
   }
 
   return (
