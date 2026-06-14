@@ -42,7 +42,7 @@ export function ProductCard({ product, view = 'grid' }: { product: Product; view
 
   if (view === 'list') {
     return (
-      <Link href={`/san-pham/${product.slug}`} className="group">
+      <Link href={`/products/${product.slug}`} className="group">
         <article className="flex gap-4 p-4 bg-card rounded-xl border border-border hover:border-accent hover:shadow-md transition-all">
           <div className="relative w-28 h-28 rounded-lg overflow-hidden bg-secondary shrink-0">
             <Image
@@ -101,7 +101,7 @@ export function ProductCard({ product, view = 'grid' }: { product: Product; view
   }
 
   return (
-    <Link href={`/san-pham/${product.slug}`} className="group">
+    <Link href={`/products/${product.slug}`} className="group">
       <article className="bg-card rounded-xl border border-border hover:border-accent hover:shadow-lg transition-all overflow-hidden">
         <div className="relative aspect-square bg-secondary overflow-hidden">
           <Image

@@ -14,6 +14,7 @@ import {
   Captcha,
 } from "@/components/auth-shell";
 import { apiClient } from "@/lib/api-client";
+import { setStoredUser, toAuthUser } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -72,6 +73,8 @@ export default function LoginPage() {
     });
     setPending(false);
     if (response.success) {
+      const authUser = toAuthUser(response.data);
+      if (authUser) setStoredUser(authUser);
       toast.success("Đăng nhập thành công", {
         description: "Đang chuyển hướng về trang chủ...",
       });

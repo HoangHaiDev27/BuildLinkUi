@@ -137,7 +137,7 @@ export default function CartDrawer({
               <span className="text-accent">{formatPrice(total)}</span>
             </div>
           </div>
-          <Link href="/gio-hang" className="w-full">
+          <Link href="/cart" className="w-full">
             <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
               Tiến hành thanh toán
             </Button>

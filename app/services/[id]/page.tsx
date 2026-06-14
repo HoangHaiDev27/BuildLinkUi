@@ -11,8 +11,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import Link from 'next/link'
 import { Star, MapPin, Calendar, Users, CheckCircle, Phone } from 'lucide-react'
-import { useState } from 'react'
+import { use, useState } from 'react'
 
 const CASE_STUDIES = [
   {
@@ -38,11 +39,56 @@ const CASE_STUDIES = [
   },
 ]
 
+const SERVICES: Record<
+  string,
+  { title: string; image: string; description: string }
+> = {
+  'xay-nha-pho': {
+    title: 'Xây nhà phố trọn gói',
+    image: '/images/case-study-01.jpg',
+    description:
+      'Thi công xây dựng nhà phố từ phần thô đến hoàn thiện, tối ưu công năng và chi phí cho từng diện tích đất.',
+  },
+  'sua-chua-chung-cu': {
+    title: 'Sửa chữa & cải tạo chung cư',
+    image: '/images/case-study-02.jpg',
+    description:
+      'Cải tạo căn hộ chung cư nhanh gọn, ít ảnh hưởng hàng xóm, đảm bảo đúng quy định tòa nhà và tiến độ cam kết.',
+  },
+  'noi-that': {
+    title: 'Thi công nội thất',
+    image: '/images/service-hero.jpg',
+    description:
+      'Thiết kế và thi công nội thất theo phong cách riêng, vật liệu chuẩn và đội thợ lành nghề cho không gian sống hoàn hảo.',
+  },
+  'chong-tham': {
+    title: 'Chống thấm & chống nóng',
+    image: '/images/case-study-03.jpg',
+    description:
+      'Xử lý chống thấm sân thượng, nhà vệ sinh, tường ngoài và chống nóng mái, bảo hành dài hạn cho công trình.',
+  },
+  'op-lat': {
+    title: 'Thi công ốp lát toàn bộ nhà',
+    image: '/images/tile-gach-02.jpg',
+    description:
+      'Ốp lát gạch nền, tường và khu vực ẩm ướt với kỹ thuật chuẩn, mạch ron đều và bề mặt phẳng đẹp.',
+  },
+}
+
+const DEFAULT_SERVICE = {
+  title: 'Dịch vụ sửa chữa & hoàn thiện nội thất',
+  image: '/images/service-hero.jpg',
+  description:
+    'Với hơn 10 năm kinh nghiệm trong lĩnh vực xây dựng và trang trí nội thất, chúng tôi cam kết mang đến những giải pháp tối ưu cho mọi dự án của bạn.',
+}
+
 export default function ServiceDetailPage({
   params,
 }: {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }) {
+  const { id } = use(params)
+  const service = SERVICES[id] ?? DEFAULT_SERVICE
   const [selectedOption, setSelectedOption] = useState('standard')
 
   const servicePackages = [
@@ -94,15 +140,15 @@ export default function ServiceDetailPage({
         {/* Hero Image */}
         <div className="relative w-full h-96 bg-muted">
           <Image
-            src="/images/service-hero.jpg"
-            alt="Dịch vụ sửa chữa nội thất"
+            src={service.image}
+            alt={service.title}
             fill
             className="object-cover"
             priority
           />
-          <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-            <h1 className="text-4xl font-bold text-white text-center">
-              Dịch vụ Sửa Chữa & Hoàn Thiện Nội Thất
+          <div className="absolute inset-0 bg-black/45 flex items-center justify-center px-4">
+            <h1 className="max-w-3xl text-3xl lg:text-4xl font-bold text-white text-center">
+              {service.title}
             </h1>
           </div>
         </div>
@@ -115,8 +161,7 @@ export default function ServiceDetailPage({
                 Về dịch vụ của chúng tôi
               </h2>
               <p className="text-muted-foreground leading-relaxed mb-4">
-                Với hơn 10 năm kinh nghiệm trong lĩnh vực xây dựng và trang trí nội thất,
-                chúng tôi cam kết mang đến những giải pháp tối ưu cho mọi dự án của bạn.
+                {service.description}
               </p>
               <p className="text-muted-foreground leading-relaxed mb-6">
                 Đội ngũ các thợ lành nghề, kiến trúc sư giàu kinh nghiệm sẽ giúp bạn
@@ -179,8 +224,8 @@ export default function ServiceDetailPage({
                   </div>
                 </div>
               </div>
-              <Button className="w-full bg-primary-foreground text-primary hover:bg-white">
-                Yêu cầu báo giá
+              <Button asChild className="w-full bg-primary-foreground text-primary hover:bg-white">
+                <Link href="/contact">Yêu cầu báo giá</Link>
               </Button>
             </div>
           </div>

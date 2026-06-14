@@ -2,39 +2,54 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import {
   ShoppingCart,
   Search,
   Bell,
-  User,
   Menu,
-  X,
   ChevronDown,
   Phone,
   MapPin,
+  LogOut,
+  Package,
+  Heart,
+  LayoutDashboard,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
-import { Input } from '@/components/ui/input'
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { useAuth } from '@/hooks/use-auth'
+import { initialsFrom } from '@/lib/auth'
 import CartDrawer from './cart-drawer'
 import SearchBar from './search-bar'
 
 const materialCategories = [
-  { name: 'Gạch ốp lát', sub: ['Gạch nền', 'Gạch tường', 'Gạch mosaic', 'Gạch ngoài trời'] },
-  { name: 'Sơn', sub: ['Sơn nội thất', 'Sơn ngoại thất', 'Sơn chống thấm', 'Sơn epoxy'] },
+  { name: 'Gạch ốp lát', slug: 'gach-op-lat', sub: ['Gạch nền', 'Gạch tường', 'Gạch mosaic', 'Gạch ngoài trời'] },
+  { name: 'Sơn', slug: 'son', sub: ['Sơn nội thất', 'Sơn ngoại thất', 'Sơn chống thấm', 'Sơn epoxy'] },
   {
     name: 'Thiết bị vệ sinh',
+    slug: 'thiet-bi-ve-sinh',
     sub: ['Bồn cầu', 'Lavabo', 'Sen tắm', 'Bồn tắm'],
   },
-  { name: 'Vật liệu xây dựng', sub: ['Xi măng', 'Cát - Đá', 'Thép xây dựng', 'Gỗ ván'] },
+  { name: 'Vật liệu xây dựng', slug: 'vat-lieu-xay-dung', sub: ['Xi măng', 'Cát - Đá', 'Thép xây dựng', 'Gỗ ván'] },
 ]
 
 const serviceCategories = [
-  { name: 'Xây nhà phố', href: '/dich-vu/xay-nha-pho' },
-  { name: 'Sửa chữa chung cư', href: '/dich-vu/sua-chua-chung-cu' },
-  { name: 'Thi công nội thất', href: '/dich-vu/noi-that' },
-  { name: 'Chống thấm & Chống nóng', href: '/dich-vu/chong-tham' },
+  { name: 'Xây nhà phố', href: '/services/xay-nha-pho' },
+  { name: 'Sửa chữa chung cư', href: '/services/sua-chua-chung-cu' },
+  { name: 'Thi công nội thất', href: '/services/noi-that' },
+  { name: 'Chống thấm & Chống nóng', href: '/services/chong-tham' },
 ]
 
 export default function Navbar() {
@@ -42,6 +57,18 @@ export default function Navbar() {
   const [megaOpen, setMegaOpen] = useState<string | null>(null)
   const [cartOpen, setCartOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
+
+  const router = useRouter()
+  const { user, isAuthenticated, ready, logout } = useAuth()
+
+  async function handleLogout() {
+    await logout()
+    setMobileOpen(false)
+    toast.success('Đã đăng xuất', {
+      description: 'Hẹn gặp lại bạn tại VậtLiệu Pro.',
+    })
+    router.push('/')
+  }
 
   return (
     <>
@@ -90,29 +117,31 @@ export default function Navbar() {
                 <ChevronDown className="w-4 h-4" />
               </button>
               {megaOpen === 'vlieu' && (
-                <div className="absolute top-full left-0 mt-1 w-[600px] bg-card border border-border rounded-xl shadow-xl p-6 grid grid-cols-2 gap-6">
-                  {materialCategories.map((cat) => (
-                    <div key={cat.name}>
-                      <Link
-                        href={`/danh-muc/${cat.name.toLowerCase().replace(/ /g, '-')}`}
-                        className="font-semibold text-sm text-primary mb-2 block hover:text-accent"
-                      >
-                        {cat.name}
-                      </Link>
-                      <ul className="space-y-1">
-                        {cat.sub.map((s) => (
-                          <li key={s}>
-                            <Link
-                              href={`/danh-muc/${s.toLowerCase().replace(/ /g, '-')}`}
-                              className="text-sm text-muted-foreground hover:text-accent"
-                            >
-                              {s}
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
+                <div className="absolute top-full left-0 pt-2 z-50">
+                  <div className="w-[600px] bg-card border border-border rounded-xl shadow-xl p-6 grid grid-cols-2 gap-6">
+                    {materialCategories.map((cat) => (
+                      <div key={cat.name}>
+                        <Link
+                          href={`/categories/${cat.slug}`}
+                          className="font-semibold text-sm text-primary mb-2 block hover:text-accent"
+                        >
+                          {cat.name}
+                        </Link>
+                        <ul className="space-y-1">
+                          {cat.sub.map((s) => (
+                            <li key={s}>
+                              <Link
+                                href={`/categories/${cat.slug}`}
+                                className="text-sm text-muted-foreground hover:text-accent"
+                              >
+                                {s}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
@@ -128,37 +157,39 @@ export default function Navbar() {
                 <ChevronDown className="w-4 h-4" />
               </button>
               {megaOpen === 'dichvu' && (
-                <div className="absolute top-full left-0 mt-1 w-64 bg-card border border-border rounded-xl shadow-xl p-4">
-                  <ul className="space-y-1">
-                    {serviceCategories.map((s) => (
-                      <li key={s.name}>
-                        <Link
-                          href={s.href}
-                          className="block px-3 py-2 text-sm text-foreground hover:text-accent hover:bg-secondary rounded-md transition-colors"
-                        >
-                          {s.name}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
+                <div className="absolute top-full left-0 pt-2 z-50">
+                  <div className="w-64 bg-card border border-border rounded-xl shadow-xl p-4">
+                    <ul className="space-y-1">
+                      {serviceCategories.map((s) => (
+                        <li key={s.name}>
+                          <Link
+                            href={s.href}
+                            className="block px-3 py-2 text-sm text-foreground hover:text-accent hover:bg-secondary rounded-md transition-colors"
+                          >
+                            {s.name}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
               )}
             </div>
 
             <Link
-              href="/du-an"
+              href="/projects"
               className="px-3 py-2 text-sm font-medium text-foreground hover:text-accent rounded-md hover:bg-secondary transition-colors"
             >
               Dự án
             </Link>
             <Link
-              href="/tin-tuc"
+              href="/news"
               className="px-3 py-2 text-sm font-medium text-foreground hover:text-accent rounded-md hover:bg-secondary transition-colors"
             >
               Tin tức
             </Link>
             <Link
-              href="/lien-he"
+              href="/contact"
               className="px-3 py-2 text-sm font-medium text-foreground hover:text-accent rounded-md hover:bg-secondary transition-colors"
             >
               Liên hệ
@@ -175,40 +206,105 @@ export default function Navbar() {
               <Search className="w-5 h-5" />
             </button>
 
-            <button
-              className="relative p-2 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors hidden sm:flex"
-              aria-label="Thông báo"
-            >
-              <Bell className="w-5 h-5" />
-              <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 text-[10px] flex items-center justify-center bg-destructive text-destructive-foreground">
-                3
-              </Badge>
-            </button>
+            {/* Notifications only matter for a signed-in account */}
+            {isAuthenticated && (
+              <button
+                className="relative p-2 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors hidden sm:flex"
+                aria-label="Thông báo"
+              >
+                <Bell className="w-5 h-5" />
+                <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 text-[10px] flex items-center justify-center bg-destructive text-destructive-foreground">
+                  3
+                </Badge>
+              </button>
+            )}
 
-            <button
-              onClick={() => setCartOpen(true)}
-              className="relative p-2 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
-              aria-label="Giỏ hàng"
-            >
-              <ShoppingCart className="w-5 h-5" />
-              <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 text-[10px] flex items-center justify-center bg-accent text-accent-foreground">
-                2
-              </Badge>
-            </button>
+            {/* Cart is only meaningful for a signed-in account */}
+            {isAuthenticated && (
+              <button
+                onClick={() => setCartOpen(true)}
+                className="relative p-2 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="Giỏ hàng"
+              >
+                <ShoppingCart className="w-5 h-5" />
+                <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 text-[10px] flex items-center justify-center bg-accent text-accent-foreground">
+                  2
+                </Badge>
+              </button>
+            )}
 
-            <Link
-              href="/account"
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-md hover:bg-secondary text-sm font-medium text-foreground hover:text-accent transition-colors"
-            >
-              <User className="w-4 h-4" />
-              <span className="hidden md:inline">Tài khoản</span>
-            </Link>
-
-            <Link href="/login" className="hidden lg:block">
-              <Button size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90">
-                Báo giá ngay
-              </Button>
-            </Link>
+            {/* Auth zone: keep width stable before the client knows the state */}
+            {!ready ? (
+              <div className="ml-1 h-9 w-9 rounded-full bg-secondary animate-pulse" aria-hidden />
+            ) : isAuthenticated && user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className="ml-1 rounded-full outline-none ring-offset-2 ring-offset-card focus-visible:ring-2 focus-visible:ring-ring transition-transform active:scale-[0.96]"
+                    aria-label="Tài khoản của tôi"
+                  >
+                    <Avatar className="size-9 border border-border">
+                      <AvatarFallback className="bg-primary text-primary-foreground text-sm font-semibold">
+                        {initialsFrom(user.displayName, user.email)}
+                      </AvatarFallback>
+                    </Avatar>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-60">
+                  <DropdownMenuLabel className="flex flex-col gap-0.5">
+                    <span className="text-sm font-semibold text-foreground truncate">
+                      {user.displayName}
+                    </span>
+                    <span className="text-xs font-normal text-muted-foreground truncate">
+                      {user.email}
+                    </span>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/account">
+                      <LayoutDashboard className="text-muted-foreground" />
+                      Tài khoản của tôi
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/account">
+                      <Package className="text-muted-foreground" />
+                      Đơn hàng của tôi
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/account">
+                      <Heart className="text-muted-foreground" />
+                      Sản phẩm yêu thích
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onSelect={(e) => {
+                      e.preventDefault()
+                      void handleLogout()
+                    }}
+                  >
+                    <LogOut />
+                    Đăng xuất
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <div className="hidden sm:flex items-center gap-2 ml-1">
+                <Button asChild variant="ghost" size="sm">
+                  <Link href="/login">Đăng nhập</Link>
+                </Button>
+                <Button
+                  asChild
+                  size="sm"
+                  className="bg-accent text-accent-foreground hover:bg-accent/90"
+                >
+                  <Link href="/register">Đăng ký</Link>
+                </Button>
+              </div>
+            )}
 
             {/* Mobile menu trigger */}
             <button
@@ -243,7 +339,7 @@ export default function Navbar() {
             {materialCategories.map((cat) => (
               <Link
                 key={cat.name}
-                href={`/danh-muc/${cat.name.toLowerCase().replace(/ /g, '-')}`}
+                href={`/categories/${cat.slug}`}
                 className="block px-2 py-2 text-sm font-medium text-foreground hover:text-accent hover:bg-secondary rounded-md transition-colors"
                 onClick={() => setMobileOpen(false)}
               >
@@ -263,13 +359,67 @@ export default function Navbar() {
                 {s.name}
               </Link>
             ))}
-            <div className="pt-4">
-              <Link href="/login" onClick={() => setMobileOpen(false)}>
-                <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
-                  Báo giá ngay
-                </Button>
-              </Link>
-            </div>
+            {ready && isAuthenticated && user ? (
+              <div className="pt-4 mt-2 border-t border-border space-y-1">
+                <div className="flex items-center gap-3 px-2 py-3">
+                  <Avatar className="size-10 border border-border">
+                    <AvatarFallback className="bg-primary text-primary-foreground text-sm font-semibold">
+                      {initialsFrom(user.displayName, user.email)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-foreground truncate">
+                      {user.displayName}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                  </div>
+                </div>
+                <Link
+                  href="/account"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center gap-2.5 px-2 py-2 text-sm font-medium text-foreground hover:text-accent hover:bg-secondary rounded-md transition-colors"
+                >
+                  <LayoutDashboard className="w-4 h-4 text-muted-foreground" />
+                  Tài khoản của tôi
+                </Link>
+                <Link
+                  href="/account"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center gap-2.5 px-2 py-2 text-sm font-medium text-foreground hover:text-accent hover:bg-secondary rounded-md transition-colors"
+                >
+                  <Package className="w-4 h-4 text-muted-foreground" />
+                  Đơn hàng của tôi
+                </Link>
+                <Link
+                  href="/account"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center gap-2.5 px-2 py-2 text-sm font-medium text-foreground hover:text-accent hover:bg-secondary rounded-md transition-colors"
+                >
+                  <Heart className="w-4 h-4 text-muted-foreground" />
+                  Sản phẩm yêu thích
+                </Link>
+                <button
+                  onClick={() => void handleLogout()}
+                  className="w-full flex items-center gap-2.5 px-2 py-2 text-sm font-medium text-destructive hover:bg-destructive/10 rounded-md transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Đăng xuất
+                </button>
+              </div>
+            ) : (
+              <div className="pt-4 mt-2 border-t border-border grid grid-cols-2 gap-2">
+                <Link href="/login" onClick={() => setMobileOpen(false)}>
+                  <Button variant="outline" className="w-full">
+                    Đăng nhập
+                  </Button>
+                </Link>
+                <Link href="/register" onClick={() => setMobileOpen(false)}>
+                  <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
+                    Đăng ký
+                  </Button>
+                </Link>
+              </div>
+            )}
           </nav>
         </SheetContent>
       </Sheet>
