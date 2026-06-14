@@ -16,6 +16,9 @@ import {
   Package,
   Heart,
   LayoutDashboard,
+  Building2,
+  Inbox,
+  Shield,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -60,6 +63,9 @@ export default function Navbar() {
 
   const router = useRouter()
   const { user, isAuthenticated, ready, logout } = useAuth()
+  const isCompany = user?.accountType?.toLowerCase() === 'company'
+  const isAdmin = user?.roles?.some((r) => r.toLowerCase() === 'admin') ?? false
+  const accountHref = isCompany ? '/company/dashboard' : '/account'
 
   async function handleLogout() {
     await logout()
@@ -177,6 +183,12 @@ export default function Navbar() {
             </div>
 
             <Link
+              href="/companies"
+              className="px-3 py-2 text-sm font-medium text-foreground hover:text-accent rounded-md hover:bg-secondary transition-colors"
+            >
+              Nhà cung cấp
+            </Link>
+            <Link
               href="/projects"
               className="px-3 py-2 text-sm font-medium text-foreground hover:text-accent rounded-md hover:bg-secondary transition-colors"
             >
@@ -260,24 +272,57 @@ export default function Navbar() {
                     </span>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href="/account">
-                      <LayoutDashboard className="text-muted-foreground" />
-                      Tài khoản của tôi
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/account">
-                      <Package className="text-muted-foreground" />
-                      Đơn hàng của tôi
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/account">
-                      <Heart className="text-muted-foreground" />
-                      Sản phẩm yêu thích
-                    </Link>
-                  </DropdownMenuItem>
+                  {isAdmin && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/admin">
+                        <Shield className="text-accent" />
+                        Trang quản trị
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  {isCompany ? (
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link href="/company/dashboard">
+                          <LayoutDashboard className="text-muted-foreground" />
+                          Trang quản lý
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/company/dashboard">
+                          <Building2 className="text-muted-foreground" />
+                          Hồ sơ công ty
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/company/dashboard">
+                          <Inbox className="text-muted-foreground" />
+                          Yêu cầu báo giá
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
+                  ) : (
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link href="/account">
+                          <LayoutDashboard className="text-muted-foreground" />
+                          Tài khoản của tôi
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/account">
+                          <Package className="text-muted-foreground" />
+                          Đơn hàng của tôi
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/account">
+                          <Heart className="text-muted-foreground" />
+                          Sản phẩm yêu thích
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     variant="destructive"
@@ -359,6 +404,24 @@ export default function Navbar() {
                 {s.name}
               </Link>
             ))}
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-2 pt-4 pb-1">
+              Khác
+            </p>
+            {[
+              { name: 'Nhà cung cấp', href: '/companies' },
+              { name: 'Dự án', href: '/projects' },
+              { name: 'Tin tức', href: '/news' },
+              { name: 'Liên hệ', href: '/contact' },
+            ].map((l) => (
+              <Link
+                key={l.href}
+                href={l.href}
+                className="block px-2 py-2 text-sm font-medium text-foreground hover:text-accent hover:bg-secondary rounded-md transition-colors"
+                onClick={() => setMobileOpen(false)}
+              >
+                {l.name}
+              </Link>
+            ))}
             {ready && isAuthenticated && user ? (
               <div className="pt-4 mt-2 border-t border-border space-y-1">
                 <div className="flex items-center gap-3 px-2 py-3">
@@ -374,30 +437,71 @@ export default function Navbar() {
                     <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                   </div>
                 </div>
-                <Link
-                  href="/account"
-                  onClick={() => setMobileOpen(false)}
-                  className="flex items-center gap-2.5 px-2 py-2 text-sm font-medium text-foreground hover:text-accent hover:bg-secondary rounded-md transition-colors"
-                >
-                  <LayoutDashboard className="w-4 h-4 text-muted-foreground" />
-                  Tài khoản của tôi
-                </Link>
-                <Link
-                  href="/account"
-                  onClick={() => setMobileOpen(false)}
-                  className="flex items-center gap-2.5 px-2 py-2 text-sm font-medium text-foreground hover:text-accent hover:bg-secondary rounded-md transition-colors"
-                >
-                  <Package className="w-4 h-4 text-muted-foreground" />
-                  Đơn hàng của tôi
-                </Link>
-                <Link
-                  href="/account"
-                  onClick={() => setMobileOpen(false)}
-                  className="flex items-center gap-2.5 px-2 py-2 text-sm font-medium text-foreground hover:text-accent hover:bg-secondary rounded-md transition-colors"
-                >
-                  <Heart className="w-4 h-4 text-muted-foreground" />
-                  Sản phẩm yêu thích
-                </Link>
+                {isAdmin && (
+                  <Link
+                    href="/admin"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-2.5 px-2 py-2 text-sm font-medium text-foreground hover:text-accent hover:bg-secondary rounded-md transition-colors"
+                  >
+                    <Shield className="w-4 h-4 text-accent" />
+                    Trang quản trị
+                  </Link>
+                )}
+                {isCompany ? (
+                  <>
+                    <Link
+                      href="/company/dashboard"
+                      onClick={() => setMobileOpen(false)}
+                      className="flex items-center gap-2.5 px-2 py-2 text-sm font-medium text-foreground hover:text-accent hover:bg-secondary rounded-md transition-colors"
+                    >
+                      <LayoutDashboard className="w-4 h-4 text-muted-foreground" />
+                      Trang quản lý
+                    </Link>
+                    <Link
+                      href="/company/dashboard"
+                      onClick={() => setMobileOpen(false)}
+                      className="flex items-center gap-2.5 px-2 py-2 text-sm font-medium text-foreground hover:text-accent hover:bg-secondary rounded-md transition-colors"
+                    >
+                      <Building2 className="w-4 h-4 text-muted-foreground" />
+                      Hồ sơ công ty
+                    </Link>
+                    <Link
+                      href="/company/dashboard"
+                      onClick={() => setMobileOpen(false)}
+                      className="flex items-center gap-2.5 px-2 py-2 text-sm font-medium text-foreground hover:text-accent hover:bg-secondary rounded-md transition-colors"
+                    >
+                      <Inbox className="w-4 h-4 text-muted-foreground" />
+                      Yêu cầu báo giá
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      href="/account"
+                      onClick={() => setMobileOpen(false)}
+                      className="flex items-center gap-2.5 px-2 py-2 text-sm font-medium text-foreground hover:text-accent hover:bg-secondary rounded-md transition-colors"
+                    >
+                      <LayoutDashboard className="w-4 h-4 text-muted-foreground" />
+                      Tài khoản của tôi
+                    </Link>
+                    <Link
+                      href="/account"
+                      onClick={() => setMobileOpen(false)}
+                      className="flex items-center gap-2.5 px-2 py-2 text-sm font-medium text-foreground hover:text-accent hover:bg-secondary rounded-md transition-colors"
+                    >
+                      <Package className="w-4 h-4 text-muted-foreground" />
+                      Đơn hàng của tôi
+                    </Link>
+                    <Link
+                      href="/account"
+                      onClick={() => setMobileOpen(false)}
+                      className="flex items-center gap-2.5 px-2 py-2 text-sm font-medium text-foreground hover:text-accent hover:bg-secondary rounded-md transition-colors"
+                    >
+                      <Heart className="w-4 h-4 text-muted-foreground" />
+                      Sản phẩm yêu thích
+                    </Link>
+                  </>
+                )}
                 <button
                   onClick={() => void handleLogout()}
                   className="w-full flex items-center gap-2.5 px-2 py-2 text-sm font-medium text-destructive hover:bg-destructive/10 rounded-md transition-colors"
