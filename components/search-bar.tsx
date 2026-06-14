@@ -7,10 +7,10 @@ import Link from 'next/link'
 import Image from 'next/image'
 
 const suggestions = [
-  { type: 'product', name: 'Gạch Granite 60x60 Vân Đá Xám', href: '/san-pham/gach-granite-60x60', image: '/images/tile-gach-01.jpg' },
-  { type: 'product', name: 'Gạch Porcelain Đen Mờ 80x80cm', href: '/san-pham/gach-porcelain-80x80', image: '/images/tile-gach-02.jpg' },
-  { type: 'service', name: 'Thi công ốp lát toàn bộ nhà', href: '/dich-vu/op-lat', image: '/images/service-hero.jpg' },
-  { type: 'product', name: 'Sơn Dulux Chống Thấm 5L', href: '/san-pham/son-dulux', image: '/images/paint-son-01.jpg' },
+  { type: 'product', name: 'Gạch Granite 60x60 Vân Đá Xám', href: '/products/gach-granite-60x60', image: '/images/tile-gach-01.jpg' },
+  { type: 'product', name: 'Gạch Porcelain Đen Mờ 80x80cm', href: '/products/gach-porcelain-80x80', image: '/images/tile-gach-02.jpg' },
+  { type: 'service', name: 'Thi công ốp lát toàn bộ nhà', href: '/services/op-lat', image: '/images/service-hero.jpg' },
+  { type: 'product', name: 'Sơn Dulux Nội Thất 18L', href: '/products/son-dulux', image: '/images/paint-son-01.jpg' },
 ]
 
 const trending = ['Gạch 60x60', 'Sơn nội thất', 'Thi công chung cư', 'Thiết bị vệ sinh TOTO']

@@ -37,6 +37,7 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
+import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -308,9 +309,11 @@ const Panel = ({
 
 export default function AccountPage() {
   const router = useRouter();
+  const { logout } = useAuth();
   const [active, setActive] = useState<SectionId>("overview");
 
-  function handleLogout() {
+  async function handleLogout() {
+    await logout();
     toast.success("Đã đăng xuất", {
       description: "Hẹn gặp lại bạn tại VậtLiệu Pro.",
     });

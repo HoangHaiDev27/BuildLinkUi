@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import Link from 'next/link'
 import Navbar from '@/components/navbar'
 import Footer from '@/components/footer'
 import { ProductCard } from '@/components/product-card'
@@ -13,100 +14,9 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
 import { ChevronDown, Search } from 'lucide-react'
+import { PRODUCTS } from '@/lib/catalog'
 
-const PRODUCTS = [
-  {
-    id: 1,
-    name: 'Gạch men lát sàn 60x60cm',
-    brand: 'Viglacera',
-    category: 'Gạch',
-    price: 185000,
-    unit: 'm²',
-    size: '60x60cm',
-    image: '/images/tile-gach-01.jpg',
-    rating: 4.8,
-    reviewCount: 124,
-    inStock: true,
-    slug: 'gach-men-lat-san-60x60',
-  },
-  {
-    id: 2,
-    name: 'Gạch granite 80x80cm',
-    brand: 'Đồng Tâm',
-    category: 'Gạch',
-    price: 320000,
-    unit: 'm²',
-    size: '80x80cm',
-    image: '/images/tile-gach-02.jpg',
-    rating: 4.9,
-    reviewCount: 89,
-    inStock: true,
-    isNew: true,
-    slug: 'gach-granite-80x80',
-  },
-  {
-    id: 3,
-    name: 'Gạch giả gỗ 20x120cm',
-    brand: 'Prime',
-    category: 'Gạch',
-    price: 245000,
-    unit: 'm²',
-    size: '20x120cm',
-    image: '/images/tile-gach-03.jpg',
-    rating: 4.7,
-    reviewCount: 56,
-    inStock: true,
-    slug: 'gach-gia-go-20x120',
-  },
-  {
-    id: 4,
-    name: 'Gạch subway trắng 10x20cm',
-    brand: 'Mỹ Đức',
-    category: 'Gạch',
-    price: 95000,
-    originalPrice: 119000,
-    unit: 'm²',
-    size: '10x20cm',
-    image: '/images/tile-gach-04.jpg',
-    rating: 4.6,
-    reviewCount: 203,
-    inStock: true,
-    isSale: true,
-    slug: 'gach-subway-trang-10x20',
-  },
-  {
-    id: 5,
-    name: 'Sơn ngoài nhà Dulux 18L',
-    brand: 'Dulux',
-    category: 'Sơn',
-    price: 1200000,
-    originalPrice: 1350000,
-    unit: 'thùng',
-    size: '18 lít',
-    image: '/images/paint-son-01.jpg',
-    rating: 4.8,
-    reviewCount: 145,
-    inStock: true,
-    isSale: true,
-    slug: 'son-dulux-ngoai-that-18l',
-  },
-  {
-    id: 6,
-    name: 'Sơn lót chống kiềm Dulux 5L',
-    brand: 'Dulux',
-    category: 'Sơn',
-    price: 420000,
-    unit: 'thùng',
-    size: '5 lít',
-    image: '/images/paint-son-01.jpg',
-    rating: 4.7,
-    reviewCount: 67,
-    inStock: false,
-    slug: 'son-lot-chong-kiem-5l',
-  },
-]
-
-const CATEGORIES = ['Tất cả', 'Gạch', 'Sơn', 'Thiết bị vệ sinh', 'Vật liệu khác']
+const CATEGORIES = ['Tất cả', 'Gạch', 'Sơn', 'Thiết bị vệ sinh', 'Vật liệu xây dựng']
 const SORT_OPTIONS = [
   { label: 'Mới nhất', value: 'newest' },
   { label: 'Giá thấp đến cao', value: 'price-asc' },
@@ -120,14 +30,31 @@ export default function ProductsPage() {
   const [sortBy, setSortBy] = useState('newest')
   const [searchQuery, setSearchQuery] = useState('')
 
-  const filteredProducts = PRODUCTS.filter((product) => {
-    const matchesCategory =
-      selectedCategory === 'Tất cả' || product.category === selectedCategory
-    const matchesSearch =
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.category.toLowerCase().includes(searchQuery.toLowerCase())
-    return matchesCategory && matchesSearch
-  })
+  const filteredProducts = useMemo(() => {
+    const list = PRODUCTS.filter((product) => {
+      const matchesCategory =
+        selectedCategory === 'Tất cả' || product.category === selectedCategory
+      const q = searchQuery.toLowerCase()
+      const matchesSearch =
+        product.name.toLowerCase().includes(q) ||
+        product.brand.toLowerCase().includes(q) ||
+        product.category.toLowerCase().includes(q)
+      return matchesCategory && matchesSearch
+    })
+
+    switch (sortBy) {
+      case 'price-asc':
+        return [...list].sort((a, b) => a.price - b.price)
+      case 'price-desc':
+        return [...list].sort((a, b) => b.price - a.price)
+      case 'rating':
+        return [...list].sort((a, b) => b.rating - a.rating)
+      case 'popular':
+        return [...list].sort((a, b) => b.reviewCount - a.reviewCount)
+      default:
+        return list
+    }
+  }, [selectedCategory, sortBy, searchQuery])
 
   return (
     <div className="min-h-[100dvh] bg-background flex flex-col">
@@ -137,7 +64,7 @@ export default function ProductsPage() {
         {/* Breadcrumb */}
         <div className="border-b border-border">
           <div className="max-w-7xl mx-auto px-4 py-3 text-sm text-muted-foreground">
-            <span>Trang chủ</span>
+            <Link href="/" className="hover:text-accent">Trang chủ</Link>
             <span className="mx-2">/</span>
             <span className="text-foreground font-medium">Sản phẩm</span>
           </div>
