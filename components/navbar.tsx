@@ -64,7 +64,7 @@ export default function Navbar() {
   const router = useRouter()
   const { user, isAuthenticated, ready, logout } = useAuth()
   const isCompany = user?.accountType?.toLowerCase() === 'company'
-  const isAdmin = user?.roles?.some((r) => r.toLowerCase() === 'admin') ?? false
+  const isAdmin = user?.role?.toLowerCase() === 'admin'
   const accountHref = isCompany ? '/company/dashboard' : '/account'
 
   async function handleLogout() {

@@ -15,7 +15,7 @@ export interface AuthUser {
   accountId: string
   email: string
   accountType: string
-  roles: string[]
+  role: string
   displayName: string
 }
 
@@ -24,7 +24,7 @@ interface AuthResponseData {
   accountId?: string
   email?: string
   accountType?: string
-  roles?: string[]
+  role?: string
 }
 
 export function displayNameFromEmail(email: string): string {
@@ -52,7 +52,7 @@ export function toAuthUser(data: AuthResponseData | null | undefined): AuthUser 
     accountId: data.accountId ?? '',
     email: data.email,
     accountType: data.accountType ?? '',
-    roles: data.roles ?? [],
+    role: data.role ?? '',
     displayName: displayNameFromEmail(data.email),
   }
 }
