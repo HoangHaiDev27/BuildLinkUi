@@ -64,9 +64,9 @@ export default function RegisterPage() {
 
     if (response.success) {
       toast.success('Tạo tài khoản thành công', {
-        description: 'Bạn có thể đăng nhập để bắt đầu yêu cầu báo giá.',
+        description: 'Vui lòng kiểm tra email để nhận mã xác thực.',
       })
-      router.push('/login')
+      router.push(`/verify-email?email=${encodeURIComponent(form.email)}`)
     } else {
       setError(response.message || 'Đăng ký thất bại.')
       toast.error('Đăng ký thất bại', {

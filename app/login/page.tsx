@@ -18,6 +18,12 @@ import { setStoredUser, toAuthUser } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// Backend trả về thông báo dạng: "Tài khoản chưa xác thực email. Vui lòng
+// xác thực trước khi đăng nhập." -> nhận diện để gợi ý người dùng xác thực.
+function isUnverifiedError(message?: string) {
+  return !!message && message.toLowerCase().includes("chưa xác thực");
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -25,7 +31,10 @@ export default function LoginPage() {
   const [showPw, setShowPw] = useState(false);
   const [verified, setVerified] = useState(false);
   const [error, setError] = useState("");
+  const [needsVerify, setNeedsVerify] = useState(false);
   const [pending, setPending] = useState(false);
+
+  const verifyHref = `/verify-email?email=${encodeURIComponent(email)}`;
 
   function validate() {
     if (!EMAIL_RE.test(email)) {
@@ -65,6 +74,7 @@ export default function LoginPage() {
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     if (!validate()) return;
+    setNeedsVerify(false);
     setPending(true);
     // Gọi API login của backend
     const response = await apiClient.post("/api/Auth/login", {
@@ -79,6 +89,15 @@ export default function LoginPage() {
         description: "Đang chuyển hướng về trang chủ...",
       });
       router.push("/"); // Chuyển hướng sau khi login thành công
+    } else if (isUnverifiedError(response.message)) {
+      // Tài khoản chưa xác thực: gợi ý liên kết và tự chuyển hướng để người
+      // dùng không bị "mắc kẹt" tại trang đăng nhập.
+      setNeedsVerify(true);
+      setError(response.message || "Tài khoản chưa được xác thực email.");
+      toast.warning("Tài khoản chưa xác thực", {
+        description: "Đang chuyển đến trang xác thực email...",
+      });
+      router.push(verifyHref);
     } else {
       setError(response.message || "Email hoặc mật khẩu không chính xác.");
       toast.error("Đăng nhập thất bại", {
@@ -155,6 +174,17 @@ export default function LoginPage() {
         </div>
         <Captcha verified={verified} onToggle={() => setVerified((v) => !v)} />
         {error && <p className="text-sm text-destructive">{error}</p>}
+        {needsVerify && (
+          <p className="text-sm text-muted-foreground">
+            <Link
+              href={verifyHref}
+              className="font-semibold text-primary hover:text-accent transition-colors"
+            >
+              Xác thực email ngay
+            </Link>{" "}
+            để tiếp tục đăng nhập.
+          </p>
+        )}
         <Button type="submit" size="lg" className="w-full" disabled={pending}>
           {pending ? (
             <>
