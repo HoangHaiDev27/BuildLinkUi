@@ -1,6 +1,8 @@
 'use client'
 
-import { Check, ShieldCheck, Facebook, MessageCircle } from 'lucide-react'
+import { forwardRef } from 'react'
+import { Facebook, MessageCircle } from 'lucide-react'
+import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile'
 import Navbar from '@/components/navbar'
 
 /* Brand logos via Simple Icons CDN (real marks, not hand-rolled). Plain <img> avoids next/image domain config. */
@@ -72,34 +74,31 @@ export function OrDivider({ label = 'hoặc' }: { label?: string }) {
   )
 }
 
-export function Captcha({
-  verified,
-  onToggle,
-}: {
-  verified: boolean
-  onToggle: () => void
-}) {
+/**
+ * Cloudflare Turnstile widget. `forwardRef` để trang cha gọi `.reset()` lấy
+ * token mới sau mỗi lần login thất bại (token Turnstile chỉ dùng được 1 lần).
+ * Site key đọc từ NEXT_PUBLIC_TURNSTILE_SITE_KEY.
+ */
+export const Captcha = forwardRef<
+  TurnstileInstance,
+  {
+    onVerify: (token: string) => void
+    onExpire: () => void
+  }
+>(function Captcha({ onVerify, onExpire }, ref) {
+  const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
+  if (!siteKey) return null
   return (
     <div className="space-y-2">
       <p className="text-sm text-foreground">Xác minh bạn không phải là robot</p>
-      <button
-        type="button"
-        onClick={onToggle}
-        aria-pressed={verified}
-        className="w-full flex items-center gap-3 rounded-md border border-border bg-secondary/40 px-4 py-3 text-left hover:border-accent/40 transition-colors"
-      >
-        <span
-          className={`flex h-5 w-5 items-center justify-center rounded border transition-colors ${
-            verified ? 'bg-accent border-accent text-accent-foreground' : 'border-muted-foreground/40 bg-card'
-          }`}
-        >
-          {verified && <Check className="w-3.5 h-3.5" strokeWidth={3} />}
-        </span>
-        <span className="text-sm text-foreground">
-          {verified ? 'Đã xác minh' : 'Tôi không phải là người máy'}
-        </span>
-        <ShieldCheck className="ml-auto w-5 h-5 text-accent" strokeWidth={1.5} />
-      </button>
+      <Turnstile
+        ref={ref}
+        siteKey={siteKey}
+        options={{ theme: 'light', language: 'vi' }}
+        onSuccess={onVerify}
+        onExpire={onExpire}
+        onError={onExpire}
+      />
     </div>
   )
-}
+})

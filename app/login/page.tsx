@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
@@ -13,23 +13,23 @@ import {
   OrDivider,
   Captcha,
 } from "@/components/auth-shell";
+import { type TurnstileInstance } from "@marsidev/react-turnstile";
 import { apiClient } from "@/lib/api-client";
 import { setStoredUser, toAuthUser } from "@/lib/auth";
+import {
+  validateEmail,
+  validatePassword,
+  isUnverifiedError,
+} from "@/lib/validation";
 import { useRouter } from "next/navigation";
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-// Backend trả về thông báo dạng: "Tài khoản chưa xác thực email. Vui lòng
-// xác thực trước khi đăng nhập." -> nhận diện để gợi ý người dùng xác thực.
-function isUnverifiedError(message?: string) {
-  return !!message && message.toLowerCase().includes("chưa xác thực");
-}
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
-  const [verified, setVerified] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState("");
+  const captchaRef = useRef<TurnstileInstance>(null);
   const [error, setError] = useState("");
   const [needsVerify, setNeedsVerify] = useState(false);
   const [pending, setPending] = useState(false);
@@ -37,15 +37,17 @@ export default function LoginPage() {
   const verifyHref = `/verify-email?email=${encodeURIComponent(email)}`;
 
   function validate() {
-    if (!EMAIL_RE.test(email)) {
-      setError("Vui lòng nhập email hợp lệ.");
+    const emailErr = validateEmail(email);
+    if (emailErr) {
+      setError(emailErr);
       return false;
     }
-    if (password.length < 6) {
-      setError("Mật khẩu cần tối thiểu 6 ký tự.");
+    const pwErr = validatePassword(password);
+    if (pwErr) {
+      setError(pwErr);
       return false;
     }
-    if (!verified) {
+    if (!captchaToken) {
       setError("Vui lòng xác minh bạn không phải là robot.");
       return false;
     }
@@ -80,6 +82,7 @@ export default function LoginPage() {
     const response = await apiClient.post("/api/Auth/login", {
       email,
       password,
+      captchaToken,
     });
     setPending(false);
     if (response.success) {
@@ -99,6 +102,10 @@ export default function LoginPage() {
       });
       router.push(verifyHref);
     } else {
+      // Token Turnstile chỉ dùng được một lần — login thất bại thì làm mới
+      // widget để lần thử kế tiếp lấy được token hợp lệ.
+      captchaRef.current?.reset();
+      setCaptchaToken("");
       setError(response.message || "Email hoặc mật khẩu không chính xác.");
       toast.error("Đăng nhập thất bại", {
         description: response.message,
@@ -172,7 +179,11 @@ export default function LoginPage() {
             </button>
           </div>
         </div>
-        <Captcha verified={verified} onToggle={() => setVerified((v) => !v)} />
+        <Captcha
+          ref={captchaRef}
+          onVerify={setCaptchaToken}
+          onExpire={() => setCaptchaToken("")}
+        />
         {error && <p className="text-sm text-destructive">{error}</p>}
         {needsVerify && (
           <p className="text-sm text-muted-foreground">

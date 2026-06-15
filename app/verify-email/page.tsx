@@ -12,8 +12,8 @@ import { Label } from '@/components/ui/label'
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp'
 import { AuthShell } from '@/components/auth-shell'
 import { apiClient } from '@/lib/api-client'
+import { EMAIL_RE } from '@/lib/validation'
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const CODE_LENGTH = 6
 const RESEND_COOLDOWN = 60 // giây
 
@@ -27,6 +27,10 @@ function VerifyEmailForm() {
   const [verifying, setVerifying] = useState(false)
   const [resending, setResending] = useState(false)
   const [cooldown, setCooldown] = useState(0)
+
+  // context=company khi đến từ luồng đăng ký doanh nghiệp -> hiển thị thông
+  // điệp "chờ duyệt" sau khi xác thực email thành công.
+  const isCompany = searchParams.get('context') === 'company'
 
   // Đọc email từ URL (?email=abc@gmail.com) khi vào trang.
   useEffect(() => {
@@ -65,7 +69,9 @@ function VerifyEmailForm() {
 
     if (response.success) {
       toast.success('Xác thực email thành công', {
-        description: 'Bạn có thể đăng nhập để bắt đầu sử dụng tài khoản.',
+        description: isCompany
+          ? 'Hồ sơ doanh nghiệp đang chờ duyệt. Chúng tôi sẽ phản hồi qua email trong 2 đến 3 ngày làm việc.'
+          : 'Bạn có thể đăng nhập để bắt đầu sử dụng tài khoản.',
       })
       router.push('/login')
     } else {
@@ -120,6 +126,12 @@ function VerifyEmailForm() {
           )}
           . Nhập mã để hoàn tất.
         </p>
+        {isCompany && (
+          <p className="mt-3 rounded-lg bg-secondary/60 px-3 py-2 text-xs text-muted-foreground">
+            Sau khi xác thực email, hồ sơ doanh nghiệp của bạn sẽ được gửi đi chờ
+            VậtLiệu Pro duyệt.
+          </p>
+        )}
       </div>
 
       <form className="space-y-5" onSubmit={onVerify}>
