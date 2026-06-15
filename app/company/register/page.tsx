@@ -23,8 +23,12 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { apiClient } from '@/lib/api-client'
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+import {
+  validateEmail,
+  validatePassword,
+  validateConfirmPassword,
+  validatePhone,
+} from '@/lib/validation'
 
 const STEPS = ['Tài khoản', 'Doanh nghiệp', 'Hồ sơ pháp lý']
 
@@ -39,7 +43,6 @@ export default function CompanyRegisterPage() {
   const router = useRouter()
   const [step, setStep] = useState(0)
   const [pending, setPending] = useState(false)
-  const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState('')
 
   const [form, setForm] = useState({
@@ -64,10 +67,14 @@ export default function CompanyRegisterPage() {
 
   function validateStep(s: number): string {
     if (s === 0) {
-      if (!EMAIL_RE.test(form.email)) return 'Email chưa hợp lệ.'
-      if (form.password.length < 6) return 'Mật khẩu cần tối thiểu 6 ký tự.'
-      if (form.password !== form.confirm) return 'Mật khẩu xác nhận không khớp.'
-      if (form.phone.replace(/\D/g, '').length < 9) return 'Số điện thoại chưa hợp lệ.'
+      const emailErr = validateEmail(form.email)
+      if (emailErr) return emailErr
+      const pwErr = validatePassword(form.password)
+      if (pwErr) return pwErr
+      const confirmErr = validateConfirmPassword(form.password, form.confirm)
+      if (confirmErr) return confirmErr
+      const phoneErr = validatePhone(form.phone)
+      if (phoneErr) return phoneErr
     }
     if (s === 1) {
       if (!form.companyName.trim()) return 'Vui lòng nhập tên doanh nghiệp.'
@@ -112,41 +119,19 @@ export default function CompanyRegisterPage() {
     setPending(false)
 
     if (response.success) {
-      setSubmitted(true)
+      // Thống nhất với luồng đăng ký cá nhân: xác thực email trước, sau đó
+      // hồ sơ doanh nghiệp ở trạng thái chờ duyệt (context=company để trang
+      // verify-email hiển thị đúng thông điệp).
+      toast.success('Tạo tài khoản thành công', {
+        description: 'Vui lòng kiểm tra email để nhận mã xác thực.',
+      })
+      router.push(
+        `/verify-email?email=${encodeURIComponent(form.email)}&context=company`,
+      )
     } else {
       setError(response.message || 'Đăng ký thất bại.')
       toast.error('Đăng ký thất bại', { description: response.message })
     }
-  }
-
-  if (submitted) {
-    return (
-      <div className="flex min-h-[100dvh] flex-col bg-secondary/30">
-        <Navbar />
-        <main className="flex-1 flex items-center justify-center px-4 py-16">
-          <div className="max-w-md text-center">
-            <div className="mx-auto mb-6 flex size-16 items-center justify-center rounded-full bg-accent/15">
-              <Check className="size-8 text-accent" />
-            </div>
-            <h1 className="text-2xl font-bold text-foreground">Đã gửi hồ sơ đăng ký</h1>
-            <p className="mt-3 text-muted-foreground">
-              Hồ sơ của <span className="font-medium text-foreground">{form.companyName}</span> đang
-              ở trạng thái chờ duyệt. Đội ngũ VậtLiệu Pro sẽ xác minh và phản hồi qua email
-              trong vòng 2 đến 3 ngày làm việc.
-            </p>
-            <div className="mt-8 flex flex-col sm:flex-row justify-center gap-3">
-              <Button asChild className="bg-accent text-accent-foreground hover:bg-accent/90">
-                <Link href="/login">Đăng nhập</Link>
-              </Button>
-              <Button asChild variant="outline">
-                <Link href="/companies">Xem các đối tác</Link>
-              </Button>
-            </div>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    )
   }
 
   return (
@@ -181,6 +166,15 @@ export default function CompanyRegisterPage() {
                 </li>
               ))}
             </ul>
+
+            <div className="mt-8 rounded-xl border border-border bg-card p-4">
+              <p className="text-sm text-muted-foreground">
+                Chỉ cần mua hàng cá nhân?{' '}
+                <Link href="/register" className="font-semibold text-accent hover:underline">
+                  Đăng ký tài khoản cá nhân
+                </Link>
+              </p>
+            </div>
           </aside>
 
           {/* Form card */}

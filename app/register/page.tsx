@@ -1,26 +1,26 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Loader2, Eye, EyeOff } from 'lucide-react'
+import { Loader2, Eye, EyeOff, Building2, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { AuthShell, SocialButtons, OrDivider, Captcha } from '@/components/auth-shell'
+import { type TurnstileInstance } from '@marsidev/react-turnstile'
 import { apiClient } from '@/lib/api-client'
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-const PHONE_RE = /^0\d{9,10}$/
+import { validateEmail, validatePassword, validatePhone } from '@/lib/validation'
 
 export default function RegisterPage() {
   const router = useRouter()
   const [form, setForm] = useState({ name: '', email: '', phone: '', password: '' })
   const [showPw, setShowPw] = useState(false)
   const [agree, setAgree] = useState(false)
-  const [verified, setVerified] = useState(false)
+  const [captchaToken, setCaptchaToken] = useState('')
+  const captchaRef = useRef<TurnstileInstance>(null)
   const [error, setError] = useState('')
   const [pending, setPending] = useState(false)
 
@@ -31,11 +31,14 @@ export default function RegisterPage() {
 
   function validate() {
     if (form.name.trim().length < 2) return 'Vui lòng nhập họ và tên.'
-    if (!EMAIL_RE.test(form.email)) return 'Vui lòng nhập email hợp lệ.'
-    if (!PHONE_RE.test(form.phone)) return 'Số điện thoại không hợp lệ (bắt đầu bằng 0).'
-    if (form.password.length < 6) return 'Mật khẩu cần tối thiểu 6 ký tự.'
+    const emailErr = validateEmail(form.email)
+    if (emailErr) return emailErr
+    const phoneErr = validatePhone(form.phone)
+    if (phoneErr) return phoneErr
+    const pwErr = validatePassword(form.password)
+    if (pwErr) return pwErr
     if (!agree) return 'Vui lòng đồng ý với điều khoản sử dụng.'
-    if (!verified) return 'Vui lòng xác minh bạn không phải là robot.'
+    if (!captchaToken) return 'Vui lòng xác minh bạn không phải là robot.'
     return ''
   }
 
@@ -58,6 +61,7 @@ export default function RegisterPage() {
       roleName: 'Customer',
       userName: form.name,
       companyName: '',
+      captchaToken,
     })
 
     setPending(false)
@@ -68,6 +72,9 @@ export default function RegisterPage() {
       })
       router.push(`/verify-email?email=${encodeURIComponent(form.email)}`)
     } else {
+      // Token Turnstile dùng 1 lần — thất bại thì làm mới widget.
+      captchaRef.current?.reset()
+      setCaptchaToken('')
       setError(response.message || 'Đăng ký thất bại.')
       toast.error('Đăng ký thất bại', {
         description: response.message,
@@ -83,6 +90,20 @@ export default function RegisterPage() {
           Tạo tài khoản để mua vật liệu và yêu cầu báo giá thi công
         </p>
       </div>
+
+      <Link
+        href="/company/register"
+        className="group mb-6 flex items-center gap-3 rounded-xl border border-border bg-secondary/40 p-3.5 transition-colors hover:border-accent"
+      >
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-accent/10">
+          <Building2 className="w-4 h-4 text-accent" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-foreground">Bạn là doanh nghiệp?</p>
+          <p className="text-xs text-muted-foreground">Đăng ký gian hàng đối tác để bán vật liệu, cung cấp dịch vụ.</p>
+        </div>
+        <ArrowRight className="w-4 h-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-accent" />
+      </Link>
 
       <SocialButtons />
       <OrDivider />
@@ -178,7 +199,11 @@ export default function RegisterPage() {
           </span>
         </label>
 
-        <Captcha verified={verified} onToggle={() => setVerified((v) => !v)} />
+        <Captcha
+          ref={captchaRef}
+          onVerify={setCaptchaToken}
+          onExpire={() => setCaptchaToken('')}
+        />
 
         {error && <p className="text-sm text-destructive">{error}</p>}
 
